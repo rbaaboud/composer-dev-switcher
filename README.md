@@ -28,7 +28,6 @@ This will update and write in composer.json file with this kind of diff:
          "some-other/vendor-foo": "^2.0",
 ```
 
-
 ## Help
 
 ``` bash
