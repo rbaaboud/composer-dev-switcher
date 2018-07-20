@@ -47,8 +47,8 @@ function printMessage($message, $type = null)
  */
 function printHelp()
 {
-    printMessage('Usage: php composer-dev-switcher.php vendorName relatovePath');
-    printMessage('       php composer-dev-switcher.php vendor/name ../relative/path/to/repository');
+    printMessage('Usage: php composer-dev-switcher.php relatovePath');
+    printMessage('       php composer-dev-switcher.php ../relative/path/to/repository');
 }
 
 /**
@@ -79,16 +79,51 @@ function composerGetComposerJsonFilePath()
 /**
  * Returns array representation of composer.json
  *
+ * @param string $composerJsonFilePath
  * @return array
  */
-function composerGetComposerJsonAsArray()
+function composerGetComposerJsonAsArray($composerJsonFilePath)
 {
-    $asArray = json_decode(file_get_contents(composerGetComposerJsonFilePath()), true);
+    $asArray = json_decode(file_get_contents($composerJsonFilePath), true);
     if (json_last_error() !== JSON_ERROR_NONE) {
         printError('composer.json file semms to be invalid.');
     }
 
     return $asArray;
+}
+
+/**
+ * Get vendor name by relative path
+ *
+ * @param string $relativePath
+ * @return string
+ */
+function composerGetVendorNameByRelativePath($relativePath)
+{
+    printMessage('Get repository vendorName by relativePath ' . var_export($relativePath, true) . '...', 'success');
+
+    $relativePath = preg_replace('/\\' . DIRECTORY_SEPARATOR . '+/', DIRECTORY_SEPARATOR, $relativePath . DIRECTORY_SEPARATOR);
+    $relativeRepositoryComposerJsonFilePath = $relativePath . 'composer.json';
+
+    // relativePath is dir?
+    if (!is_dir($relativePath)) {
+        printError('    relativePath ' . var_export($relativePath, true) . ' is not a directory.');
+    }
+
+    // relativePath dir has composer.json file?
+    if (!file_exists($relativeRepositoryComposerJsonFilePath)) {
+        printError('    no composer.json file found in relativePath ' . var_export($relativePath, true) . '.');
+    }
+
+    $relativeRepositoryComposerJsonFileAsArray = composerGetComposerJsonAsArray($relativeRepositoryComposerJsonFilePath);
+
+    if (!array_key_exists('name', $relativeRepositoryComposerJsonFileAsArray)) {
+        printError('    ' . var_export('name', true) . ' entry not found in composer.json file.');
+    }
+
+    printMessage('    vendorName found ' . var_export($relativeRepositoryComposerJsonFileAsArray['name'], true));
+
+    return $relativeRepositoryComposerJsonFileAsArray['name'];
 }
 
 /**
@@ -144,7 +179,7 @@ function composerUpdateVendorNameAsDev($composerJsonFileAsArray, $vendorName)
  * @param string $relativePath
  * @return array
  */
-function composerCreateRelativePath($composerJsonFileAsArray, $relativePath)
+function composerCreateRepositoryWithRelativePath($composerJsonFileAsArray, $relativePath)
 {
     $relativePath = preg_replace('/\\' . DIRECTORY_SEPARATOR . '+/', DIRECTORY_SEPARATOR, $relativePath . DIRECTORY_SEPARATOR);
 
@@ -211,12 +246,11 @@ if (in_array('--help', $argv)) {
     exit(1);
 }
 
-if ($argc !== 3) {
-    printError('Expected 2 arguments. ' . ($argc - 1) . ' given.');
+if ($argc !== 2) {
+    printError('Expected 1 argument. ' . ($argc - 1) . ' given.');
 }
 
-$vendorName = $argv[1];
-$relatovePath = $argv[2];
+$relativePath = $argv[1];
 
 // composer.json exists?
 if (!file_exists(composerGetComposerJsonFilePath())) {
@@ -231,19 +265,10 @@ if (!is_writable(composerGetComposerJsonFilePath())) {
     printError('composer.json file is not writable.');
 }
 
-// relativePath is dir?
-if (!is_dir($relatovePath)) {
-    printError('relativePath ' . var_export($relatovePath, true) . ' is not a directory.');
-}
+$composerJsonFileAsArray = composerGetComposerJsonAsArray(composerGetComposerJsonFilePath());
+$vendorName = composerGetVendorNameByRelativePath($relativePath);
 
-// relativePath dir has composer.json file?
-if (!file_exists(realpath($relatovePath) . DIRECTORY_SEPARATOR . 'composer.json')) {
-    printError('no composer.json file found in relativePath ' . var_export($relatovePath, true) . '.');
-}
-
-$composerJsonFileAsArray = composerGetComposerJsonAsArray();
-
-$composerJsonFileAsArray = composerCreateRelativePath($composerJsonFileAsArray, $relatovePath);
+$composerJsonFileAsArray = composerCreateRepositoryWithRelativePath($composerJsonFileAsArray, $relativePath);
 
 $composerJsonFileAsArray = composerUpdateVendorNameAsDev($composerJsonFileAsArray, $vendorName);
 

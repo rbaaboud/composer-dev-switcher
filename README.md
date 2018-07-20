@@ -5,7 +5,7 @@ PHP CLI script to easily switch some vendor to local @dev version
 ## Usage
 
 ``` bash
-$ php composer-dev-switcher.php vendor/name ../relative/path/to/repository
+$ php composer-dev-switcher.php ../relative/path/to/repository
 ```
 
 This will update and write in composer.json file with this kind of diff:
