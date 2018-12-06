@@ -126,7 +126,7 @@ function composerGetVendorNameByRelativePath($relativePath)
         printError(var_export('name', true) . ' entry not found in composer.json file.', 2);
     }
 
-    printMessage('vendorName found ' . var_export($relativeRepositoryComposerJsonFileAsArray['name'], true), null,  2);
+    printMessage('vendorName found ' . var_export($relativeRepositoryComposerJsonFileAsArray['name'], true), null, 2);
 
     return $relativeRepositoryComposerJsonFileAsArray['name'];
 }
@@ -218,7 +218,10 @@ function composerCreateRepositoryWithRelativePath($composerJsonFileAsArray, $rel
 
         array_unshift($composerJsonFileAsArray['repositories'], [
             'type' => 'path',
-            'url' => $relativePath
+            'url' => $relativePath,
+            'options' => [
+                'symlink' => true
+            ]
         ]);
     }
 
