@@ -20,7 +20,10 @@ This will update and write in composer.json file with this kind of diff:
 +    "repositories": [
 +        {
 +            "type": "path",
-+            "url": "../relative/path/to/repository/"
++            "url": "../relative/path/to/repository/",
++            "options": {
++                "symlink": true
++            }
 +        }
 +    ],
 
